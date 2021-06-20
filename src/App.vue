@@ -32,14 +32,15 @@
             </button>
           </div>
         </div>
-        <div v-for="(category, index) in selectedCategories" :key="index" class="w-full flex flex-col space-y-6">
+        
+        <div v-for="(category, categoryIndex) in selectedCategories" :key="categoryIndex" class="w-full flex flex-col space-y-6">
           <div class="w-full bg-white border">
             <div class="p-4 bg-gray-50 border-b">
               <div class="flex justify-between items-center">
                 <h2 class="text-xl">{{ category.name }}</h2>
                 <div>
                   <div class="flex space-x-2">
-                    <button class="text-blue-600">
+                    <button @click="showAddWebsiteModal(categoryIndex)" class="text-blue-600">
                       Add new website
                     </button>
                 </div>
@@ -48,10 +49,10 @@
             </div>
             <div class="p-4">
               <div class="w-full grid grid-cols-3 text-sm gap-3">
-                <div v-for="(website, index) in category.websites" :key="index" class="overflow-hidden rounded-sm border">
+                <div v-for="(website, websiteIndex) in category.websites" :key="websiteIndex" class="overflow-hidden rounded-sm border">
                   <div class="w-full bg-gray-100 p-4 border-b relative">
                     <h4 class="tracking-tight text-gray-800">{{ website.url }}</h4>
-                    <button class="absolute top-5 right-5">
+                    <button @click="removeWebsite(categoryIndex, websiteIndex)" class="absolute top-5 right-5">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                       </svg>
@@ -68,7 +69,7 @@
                     </div>
                   </div>
                   <div v-else class="bg-white h-72 overflow-y-scroll justify-center flex items-center">
-                    <button class="h-10 px-5 text-sm text-white transition-colors duration-150 bg-blue-600 rounded-lg focus:shadow-outline hover:bg-blue-700">
+                    <button @click="collectMostVistedPages(website.url)" class="h-10 px-5 text-sm text-white transition-colors duration-150 bg-blue-600 rounded-lg focus:shadow-outline hover:bg-blue-700">
                       Collect the most visted page
                     </button>
                   </div>
@@ -82,15 +83,15 @@
         </div>
       </div>
     </div>
-    <v-modal v-model="addCaretoryModal" @confirm="confirm" @cancel="cancel">
+    
+    <!-- Add new category modal -->
+    <v-modal v-model="addCaretoryModal">
       <template v-slot:title>Add new category</template>
       <div class="text-gray-700">
         <label class="block mb-2" for="forms-labelOverInputCode">Category</label>
         <div class="relative inline-block w-full text-gray-700">
-          <select class="w-full h-10 pl-3 pr-6 text-base placeholder-gray-600 border rounded-lg appearance-none focus:shadow-outline" placeholder="Regular input">
-            <option>Education</option>
-            <option>E-commerce</option>
-            <option>E-banking</option>
+          <select v-model="newCategory" class="w-full h-10 pl-3 pr-6 text-base placeholder-gray-600 border rounded-lg appearance-none focus:shadow-outline" placeholder="Regular input">
+            <option v-for="(category, index) in categories" :key="index" :value="category">{{ category }}</option>
           </select>
           <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
             <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" fill-rule="evenodd"></path></svg>
@@ -98,7 +99,19 @@
         </div>
       </div>
       <template v-slot:footer>
-        <button @click="addCategory" class="h-8 px-4 text-sm text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800">Save</button>
+        <button @click="addCategory()" class="h-8 px-4 text-sm text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800">Save</button>
+      </template>
+    </v-modal>
+
+    <!-- add new website modal -->
+    <v-modal v-model="addWebsiteModal">
+      <template v-slot:title>Add new website</template>
+      <div class="text-gray-700">
+        <label class="block mb-2">Website url</label>
+        <input v-model="newWebsiteUrl" class="w-full h-10 px-3 text-base placeholder-gray-600 border rounded-lg focus:shadow-outline" type="text" placeholder="Regular input" id="forms-labelOverInputCode"/>
+      </div>
+      <template v-slot:footer>
+        <button @click="addWebsite()" class="h-8 px-4 text-sm text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800">Save</button>
       </template>
     </v-modal>
   </div>
@@ -116,84 +129,53 @@ export default {
   data() {
     return {
       addCaretoryModal: false,
+      addWebsiteModal: false,
       newCategory: null,
-      selectedCategories: [],
-      test: [
-        {
-          id: 'qsdfqsdf',
-          name: 'Education',
-          websites: [
-            {
-              url: 'https://router.vuejs.org'
-            },
-            {
-              url: 'https://router.vuejs.test',
-              pages: [
-                'https://router.vuejs.org/installation.html'
-              ]
-            },
-            {
-              url: 'https://router.vuejs.test',
-              pages: [
-                'https://router.vuejs.org/installation.html'
-              ]
-            }
-          ]
-        },
-        {
-          id: 'qsdfqsdf',
-          name: 'E-banking',
-          websites: [
-            {
-              url: 'https://router.vuejs.test',
-              pages: [
-                'https://router.vuejs.org/installation.html'
-              ]
-            },
-            {
-              url: 'https://router.vuejs.org'
-            },
-            {
-              url: 'https://router.vuejs.test',
-              pages: []
-            }
-          ]
-        }
-      ]
+      newWebsiteUrl: '',
+      selectedCategoryIndex: null,
+      categories: [
+        'Education',
+        'Finance',
+        'E-commerce',
+      ],
+      selectedCategories: []
     }
   },
   methods: {
     showAddCaretoryModal() {
-      this.addCaretoryModal= true
+      this.addCaretoryModal = true
     },
     hideAddCaretoryModal() {
-      this.$modal.hide('add-category-modal');
+      this.addCaretoryModal = false
+    },
+    showAddWebsiteModal(selectedCategoryIndex) {
+      this.selectedCategoryIndex = selectedCategoryIndex
+      this.addWebsiteModal = true
+    },
+    hideAddWebsiteModal() {
+      this.addWebsiteModal = false
     },
     addCategory() {
       this.selectedCategories.push({
-        id: 'qsdfqsdf',
-        name: 'Education',
-        websites: [
-          {
-            url: 'http://www.fpbm.ma SS',
-            pages: [
-              'http://www.fpbm.ma/new/amo.php',
-              'http://www.fpbm.ma/new/offres-de-formations.php',
-              'http://www.fpbm.ma/new/espace-enseignant.php',
-              'http://www.fpbm.ma/recrutement.php',
-              'http://www.fpbm.ma/scolarite/'
-            ]
-          },
-          {
-            url: 'https://www.uca.ma/',
-            pages: []
-          },
-          {
-            url: 'https://www.uir.ac.ma/',
-            pages: []
-          }
-        ]
+        name: this.newCategory,
+        websites: []
       })
+      this.addCaretoryModal = false
+    },
+    addWebsite() {
+      this.selectedCategories[this.selectedCategoryIndex]
+        .websites
+        .push({
+          url: this.newWebsiteUrl,
+          pages: []
+        })
+      this.addWebsiteModal = false
+    },
+    removeWebsite(categoryIndex, websiteIndex) {
+      this.selectedCategories[categoryIndex].websites.splice(websiteIndex, 1)
+    },
+    collectMostVistedPages(website) {
+      alert(website)
     }
   },
 }
