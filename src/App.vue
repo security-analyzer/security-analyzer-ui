@@ -59,9 +59,9 @@
                     </button>
                   </div>
                   <div v-if="website.pages.length != 0" class="bg-white h-72 overflow-y-scroll">
-                    <div v-for="(page, index) in website.pages" :key="index" class="p-4 flex items-center border-b justify-between">
+                    <div v-for="(page, pageIndex) in website.pages" :key="pageIndex" class="p-4 flex items-center border-b justify-between">
                       <h4>{{ page }}</h4>
-                      <button class="text-red-600">
+                      <button @click="removePage(categoryIndex, websiteIndex, pageIndex)" class="text-red-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -69,7 +69,7 @@
                     </div>
                   </div>
                   <div v-else class="bg-white h-72 overflow-y-scroll justify-center flex items-center">
-                    <button @click="collectMostVistedPages(website.url)" class="h-10 px-5 text-sm text-white transition-colors duration-150 bg-blue-600 rounded-lg focus:shadow-outline hover:bg-blue-700">
+                    <button @click="collectMostVistedPages(categoryIndex, websiteIndex, website.url)" class="h-10 px-5 text-sm text-white transition-colors duration-150 bg-blue-600 rounded-lg focus:shadow-outline hover:bg-blue-700">
                       Collect the most visted page
                     </button>
                   </div>
@@ -120,6 +120,7 @@
 <script>
 
 import VModel from './components/shared/VModel.vue'
+import axios from 'axios'
 
 export default {
   name: 'App',
@@ -174,8 +175,14 @@ export default {
     removeWebsite(categoryIndex, websiteIndex) {
       this.selectedCategories[categoryIndex].websites.splice(websiteIndex, 1)
     },
-    collectMostVistedPages(website) {
-      alert(website)
+    collectMostVistedPages(categoryIndex, websiteIndex, website) {
+      axios.get('http://localhost:2000/crawler/get_most_visted_pages?website=' + website)
+        .then(response => {
+          this.selectedCategories[categoryIndex].websites[websiteIndex].pages = response.data.data
+        })
+    },
+    removePage(categoryIndex, websiteIndex, pageIndex) {
+      this.selectedCategories[categoryIndex].websites[websiteIndex].pages.splice(pageIndex, 1)
     }
   },
 }
